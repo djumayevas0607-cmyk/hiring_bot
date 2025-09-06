@@ -531,29 +531,38 @@ from aiogram import Bot, Dispatcher, Router
 from aiogram.types import Message
 
 # Получаем токен из переменных среды
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+import os
+from aiohttp import web
+from aiogram import Bot, Dispatcher, Router
+from aiogram.types import Update
+from aiogram.filters import Command
 
+# Токен из переменной окружения
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
+
 dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
-# Простейший хендлер
-@router.message()
-async def start_handler(message: Message):
-    await message.answer("Привет! Я работаю!")
+# Пример обработчика команды /start
+@router.message(Command("start"))
+async def start_command(message):
+    await message.answer("Бот работает!")
 
-# Обработка вебхука
+# Обработчик webhook
 async def handle(request):
-    update = await request.json()
-    await dp.process_update(update)
-    return web.Response()
+    data = await request.json()
+    update = Update(**data)              # создаем объект Update
+    await dp.feed_update(bot, update)   # feed_update вместо process_update
+    return web.Response(text="OK")
 
+# Настройка приложения
 app = web.Application()
 app.router.add_post(f"/{BOT_TOKEN}", handle)
 
-port = int(os.environ.get("PORT", 8000))
 print("Bot ishga tushdi (webhook).")
+port = int(os.environ.get("PORT", 8000))
 web.run_app(app, port=port)
 
     
