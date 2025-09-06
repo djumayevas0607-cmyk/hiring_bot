@@ -538,34 +538,54 @@ from aiogram.types import Update
 from aiogram.filters import Command
 
 # Токен из переменной окружения
+import os
+from aiohttp import web
+from aiogram import Bot, Dispatcher, Router, types
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.state import State, StatesGroup
+
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
-
-dp = Dispatcher()
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
 router = Router()
 dp.include_router(router)
 
-# Пример обработчика команды /start
-@router.message(Command("start"))
-async def start_command(message):
-    await message.answer("Бот работает!")
+# Определяем состояния анкеты
+class Form(StatesGroup):
+    question1 = State()
+    question2 = State()
 
-# Обработчик webhook
+# Команда /start — инициирует анкету
+@router.message(commands=["start"])
+async def start_survey(message: types.Message):
+    await Form.question1.set()
+    await message.answer("Первый вопрос анкеты?")
+
+# Ответ на первый вопрос
+@router.message(Form.question1)
+async def answer_q1(message: types.Message, state):
+    await state.update_data(q1=message.text)
+    await Form.question2.set()
+    await message.answer("Второй вопрос анкеты?")
+
+# Ответ на второй вопрос
+@router.message(Form.question2)
+async def answer_q2(message: types.Message, state):
+    data = await state.get_data()
+    data["q2"] = message.text
+    await message.answer(f"Анкета завершена! Ваши ответы: {data}")
+    await state.clear()
+
+# Обработчик вебхука
 async def handle(request):
-    data = await request.json()
-    update = Update(**data)              # создаем объект Update
-    await dp.feed_update(bot, update)   # feed_update вместо process_update
-    return web.Response(text="OK")
+    update = types.Update(**await request.json())
+    await dp.feed_update(update)
+    return web.Response()
 
-# Настройка приложения
 app = web.Application()
 app.router.add_post(f"/{BOT_TOKEN}", handle)
 
-print("Bot ishga tushdi (webhook).")
-port = int(os.environ.get("PORT", 8000))
-web.run_app(app, port=port)
-
-    
-
-
-
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))
+    web.run_app(app, port=port)
