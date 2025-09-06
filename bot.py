@@ -525,19 +525,25 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-
-    
-
 import os
 from aiohttp import web
 from aiogram import Bot, Dispatcher, Router
+from aiogram.types import Message
 
+# Получаем токен из переменных среды
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 
+# Простейший хендлер
+@router.message()
+async def start_handler(message: Message):
+    await message.answer("Привет! Я работаю!")
+
+# Обработка вебхука
 async def handle(request):
     update = await request.json()
     await dp.process_update(update)
@@ -546,9 +552,11 @@ async def handle(request):
 app = web.Application()
 app.router.add_post(f"/{BOT_TOKEN}", handle)
 
-print("Bot ishga tushdi (webhook).")
 port = int(os.environ.get("PORT", 8000))
+print("Bot ishga tushdi (webhook).")
 web.run_app(app, port=port)
+
+    
 
 
 
