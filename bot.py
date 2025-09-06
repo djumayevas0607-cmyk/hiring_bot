@@ -525,56 +525,22 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-from aiohttp import web
-from aiogram import Bot, Dispatcher, Router, types
+from aiogram import Bot, Dispatcher
+from aiogram.types import Message
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
+import asyncio
 import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
-router = Router()
-dp.include_router(router)
 
-# FSM для вопросов
-class Form(StatesGroup):
-    name = State()
-    phone = State()
-    address = State()
-    # ... остальные состояния
+@dp.message(Command("start"))
+async def cmd_start(msg: Message):
+    await msg.answer("Бот работает и готов к анкете!")
 
-user_data = {}
+async def main():
+    await dp.start_polling(bot)
 
-# /start
-@router.message(Command("start"))
-async def cmd_start(msg: types.Message, state: FSMContext):
-    await bot.send_video(msg.chat.id, video="YOUR_VIDEO_FILE_ID")
-    keyboard = types.ReplyKeyboardMarkup(
-        keyboard=[[types.KeyboardButton(text="Тип работы 1"), types.KeyboardButton(text="Тип работы 2")]],
-        resize_keyboard=True, one_time_keyboard=True
-    )
-    await msg.answer("Выберите тип работы:", reply_markup=keyboard)
-    await Form.name.set()
-
-@router.message(Form.name)
-async def process_name(msg: types.Message, state: FSMContext):
-    user_data[msg.from_user.id] = {"name": msg.text}
-    await msg.answer("Telefon raqamingizni yozing: Misol: +998909998877")
-    await Form.phone.set()
-
-# Остальные обработчики аналогично
-
-# --- aiohttp webhook ---
-async def handle(request: web.Request):
-    update = await request.json()
-    await dp.process_update(types.Update(**update))
-    return web.Response()
-
-app = web.Application()
-app.router.add_post(f"/{BOT_TOKEN}", handle)
-
-port = int(os.environ.get("PORT", 8000))
-print("Bot ishga tushdi (webhook).")
-web.run_app(app, port=port)
+if __name__ == "__main__":
+    asyncio.run(main())
