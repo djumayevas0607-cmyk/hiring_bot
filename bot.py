@@ -525,19 +525,19 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-import asyncio
+import os
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.fsm.context import FSMContext
+from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
 from aiogram.fsm.state import StatesGroup, State
-import os
+from aiogram.fsm.context import FSMContext
 
-# ================= Переменные =================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# ================= FSM для вопросов =================
+# FSM для вопросов
 class Form(StatesGroup):
     name = State()
     phone = State()
@@ -557,16 +557,16 @@ class Form(StatesGroup):
 # Словарь для хранения ответов
 user_data = {}
 
-# ================= Команда /start =================
+# Команда /start
 @dp.message(Command(commands=["start"]))
 async def cmd_start(message: types.Message, state: FSMContext):
-    # Отправляем стартовое видео
+    # Отправка стартового видео
     await bot.send_video(message.chat.id, video="YOUR_VIDEO_FILE_ID")
     # Кнопки для выбора типа работы
-    keyboard = types.ReplyKeyboardMarkup(
+    keyboard = ReplyKeyboardMarkup(
         keyboard=[
-            [types.KeyboardButton(text="Тип работы 1"), types.KeyboardButton(text="Тип работы 2")],
-            [types.KeyboardButton(text="Тип работы 3")]
+            [KeyboardButton("Тип работы 1"), KeyboardButton("Тип работы 2")],
+            [KeyboardButton("Тип работы 3")]
         ],
         resize_keyboard=True,
         one_time_keyboard=True
@@ -574,28 +574,33 @@ async def cmd_start(message: types.Message, state: FSMContext):
     await message.answer("Выберите тип работы:", reply_markup=keyboard)
     await Form.name.set()
 
-# ================= Обработчики FSM =================
+# Обработчик первого вопроса (имя)
 @dp.message(Form.name)
 async def process_name(message: types.Message, state: FSMContext):
     user_data[message.from_user.id] = {"name": message.text}
     await message.answer("Telefon raqamingizni yozing: Misol: +998909998877")
     await Form.phone.set()
 
+# Обработчик телефона
 @dp.message(Form.phone)
 async def process_phone(message: types.Message, state: FSMContext):
     user_data[message.from_user.id]["phone"] = message.text
     await message.answer("Doimiy yashash manzilingizni yozing (propiska):")
     await Form.address.set()
 
-# Дальше добавляешь все вопросы аналогично, по очереди, как раньше локально
+# Добавляй остальные вопросы по аналогии
 
-# ================= Main =================
-async def main():
-    # Здесь можно загрузить админов или настройки
-    await dp.start_polling(bot)
+# -------- Webhook --------
+async def handle(request):
+    update = await request.json()
+    TelegramUpdate = types.Update(**update)
+    await dp.process_update(TelegramUpdate)
+    return web.Response()
+
+app = web.Application()
+app.router.add_post(f"/{BOT_TOKEN}", handle)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    port = int(os.environ.get("PORT", 8000))
+    print(f"Bot ishga tushdi (webhook). URL: https://<subdomain>.koyeb.app/{BOT_TOKEN}")
+    web.run_app(app, port=port)
