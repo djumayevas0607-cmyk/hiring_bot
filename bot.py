@@ -525,82 +525,15 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-import os
-from aiohttp import web
-from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
-from aiogram.fsm.state import StatesGroup, State
-from aiogram.fsm.context import FSMContext
-
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-# FSM для вопросов
-class Form(StatesGroup):
-    name = State()
-    phone = State()
-    address = State()
-    birthday = State()
-    education = State()
-    work_history = State()
-    family = State()
-    voice_answer = State()
-    russian_level = State()
-    video_answer = State()
-    last_job_reference = State()
-    salary_before = State()
-    desired_salary = State()
-    courses = State()
-
-# Словарь для хранения ответов
-user_data = {}
-
-# Команда /start
-@dp.message(Command(commands=["start"]))
-async def cmd_start(message: types.Message, state: FSMContext):
-    # Отправка стартового видео
-    await bot.send_video(message.chat.id, video="YOUR_VIDEO_FILE_ID")
-    # Кнопки для выбора типа работы
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton("Тип работы 1"), KeyboardButton("Тип работы 2")],
-            [KeyboardButton("Тип работы 3")]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
-    )
-    await message.answer("Выберите тип работы:", reply_markup=keyboard)
-    await Form.name.set()
-
-# Обработчик первого вопроса (имя)
-@dp.message(Form.name)
-async def process_name(message: types.Message, state: FSMContext):
-    user_data[message.from_user.id] = {"name": message.text}
-    await message.answer("Telefon raqamingizni yozing: Misol: +998909998877")
-    await Form.phone.set()
-
-# Обработчик телефона
-@dp.message(Form.phone)
-async def process_phone(message: types.Message, state: FSMContext):
-    user_data[message.from_user.id]["phone"] = message.text
-    await message.answer("Doimiy yashash manzilingizni yozing (propiska):")
-    await Form.address.set()
-
-# Добавляй остальные вопросы по аналогии
-
-# -------- Webhook --------
-async def handle(request):
-    update = await request.json()
-    TelegramUpdate = types.Update(**update)
-    await dp.process_update(TelegramUpdate)
-    return web.Response()
-
-app = web.Application()
-app.router.add_post(f"/{BOT_TOKEN}", handle)
+async def main():
+    bot = Bot(BOT_TOKEN)
+    dp = Dispatcher()
+    dp.include_router(router)
+    print("Bot ishga tushdi.")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8000))
-    print(f"Bot ishga tushdi (webhook). URL: https://<subdomain>.koyeb.app/{BOT_TOKEN}")
-    web.run_app(app, port=port)
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("Bot to'xtatildi.")
