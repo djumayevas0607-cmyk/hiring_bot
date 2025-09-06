@@ -526,35 +526,29 @@ async def cancel(msg: Message, state: FSMContext):
 
 # ------------- Main entry -------------
 
-    import os
+    
+
+import os
 from aiohttp import web
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, Router
 
-async def main():
-    BOT_TOKEN = os.getenv("BOT_TOKEN")
-    bot = Bot(token=BOT_TOKEN)
-    dp = Dispatcher()
-    dp.include_router(router)  # твой router
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+bot = Bot(token=BOT_TOKEN)
+dp = Dispatcher()
+router = Router()
+dp.include_router(router)
 
-    async def handle(request):
-        update = await request.json()
-        await dp.process_update(update)
-        return web.Response()
+async def handle(request):
+    update = await request.json()
+    await dp.process_update(update)
+    return web.Response()
 
-    app = web.Application()
-    app.router.add_post(f"/{BOT_TOKEN}", handle)
+app = web.Application()
+app.router.add_post(f"/{BOT_TOKEN}", handle)
 
-    print("Bot ishga tushdi (webhook).")
-    port = int(os.environ.get("PORT", 8000))
-    web.run_app(app, port=port)
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+print("Bot ishga tushdi (webhook).")
+port = int(os.environ.get("PORT", 8000))
+web.run_app(app, port=port)
 
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        print("Bot to'xtatildi.")
+
