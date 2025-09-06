@@ -525,8 +525,8 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup
+from aiohttp import web
+from aiogram import Bot, Dispatcher, Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
@@ -535,56 +535,46 @@ import os
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+router = Router()
+dp.include_router(router)
 
 # FSM для вопросов
 class Form(StatesGroup):
     name = State()
     phone = State()
     address = State()
-    birthday = State()
-    education = State()
-    work_history = State()
-    family = State()
-    voice_answer = State()
-    russian_level = State()
-    video_answer = State()
-    last_job_reference = State()
-    salary_before = State()
-    desired_salary = State()
-    courses = State()
+    # ... остальные состояния
 
-# Словарь для хранения ответов
 user_data = {}
 
-# Команда /start
-@dp.message(Command(commands=["start"]))
-async def cmd_start(message: types.Message, state: FSMContext):
-    # Отправляем стартовое видео
-    await bot.send_video(message.chat.id, video="YOUR_VIDEO_FILE_ID")
-    # Отправляем текст с кнопками
-    keyboard = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="Тип работы 1"), KeyboardButton(text="Тип работы 2")],
-            [KeyboardButton(text="Тип работы 3")]
-        ],
-        resize_keyboard=True,
-        one_time_keyboard=True
+# /start
+@router.message(Command("start"))
+async def cmd_start(msg: types.Message, state: FSMContext):
+    await bot.send_video(msg.chat.id, video="YOUR_VIDEO_FILE_ID")
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[[types.KeyboardButton(text="Тип работы 1"), types.KeyboardButton(text="Тип работы 2")]],
+        resize_keyboard=True, one_time_keyboard=True
     )
-    await message.answer("Выберите тип работы:", reply_markup=keyboard)
+    await msg.answer("Выберите тип работы:", reply_markup=keyboard)
     await Form.name.set()
 
-# Обработчик первого вопроса (имя)
-@dp.message(Form.name)
-async def process_name(message: types.Message, state: FSMContext):
-    user_data[message.from_user.id] = {"name": message.text}
-    await message.answer("Telefon raqamingizni yozing: Misol: +998909998877")
+@router.message(Form.name)
+async def process_name(msg: types.Message, state: FSMContext):
+    user_data[msg.from_user.id] = {"name": msg.text}
+    await msg.answer("Telefon raqamingizni yozing: Misol: +998909998877")
     await Form.phone.set()
 
-# Обработчик телефона
-@dp.message(Form.phone)
-async def process_phone(message: types.Message, state: FSMContext):
-    user_data[message.from_user.id]["phone"] = message.text
-    await message.answer("Doimiy yashash manzilingizni yozing (propiska):")
-    await Form.address.set()
+# Остальные обработчики аналогично
 
-# Дальше добавляем все вопросы аналогично по FSM
+# --- aiohttp webhook ---
+async def handle(request: web.Request):
+    update = await request.json()
+    await dp.process_update(types.Update(**update))
+    return web.Response()
+
+app = web.Application()
+app.router.add_post(f"/{BOT_TOKEN}", handle)
+
+port = int(os.environ.get("PORT", 8000))
+print("Bot ishga tushdi (webhook).")
+web.run_app(app, port=port)
