@@ -525,22 +525,77 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-from aiogram import Bot, Dispatcher
-from aiogram.types import Message
-from aiogram.filters import Command
 import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State
 import os
 
+# ================= Переменные =================
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-@dp.message(Command("start"))
-async def cmd_start(msg: Message):
-    await msg.answer("Бот работает и готов к анкете!")
+# ================= FSM для вопросов =================
+class Form(StatesGroup):
+    name = State()
+    phone = State()
+    address = State()
+    birthday = State()
+    education = State()
+    work_history = State()
+    family = State()
+    voice_answer = State()
+    russian_level = State()
+    video_answer = State()
+    last_job_reference = State()
+    salary_before = State()
+    desired_salary = State()
+    courses = State()
 
+# Словарь для хранения ответов
+user_data = {}
+
+# ================= Команда /start =================
+@dp.message(Command(commands=["start"]))
+async def cmd_start(message: types.Message, state: FSMContext):
+    # Отправляем стартовое видео
+    await bot.send_video(message.chat.id, video="YOUR_VIDEO_FILE_ID")
+    # Кнопки для выбора типа работы
+    keyboard = types.ReplyKeyboardMarkup(
+        keyboard=[
+            [types.KeyboardButton(text="Тип работы 1"), types.KeyboardButton(text="Тип работы 2")],
+            [types.KeyboardButton(text="Тип работы 3")]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    await message.answer("Выберите тип работы:", reply_markup=keyboard)
+    await Form.name.set()
+
+# ================= Обработчики FSM =================
+@dp.message(Form.name)
+async def process_name(message: types.Message, state: FSMContext):
+    user_data[message.from_user.id] = {"name": message.text}
+    await message.answer("Telefon raqamingizni yozing: Misol: +998909998877")
+    await Form.phone.set()
+
+@dp.message(Form.phone)
+async def process_phone(message: types.Message, state: FSMContext):
+    user_data[message.from_user.id]["phone"] = message.text
+    await message.answer("Doimiy yashash manzilingizni yozing (propiska):")
+    await Form.address.set()
+
+# Дальше добавляешь все вопросы аналогично, по очереди, как раньше локально
+
+# ================= Main =================
 async def main():
+    # Здесь можно загрузить админов или настройки
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        pass
