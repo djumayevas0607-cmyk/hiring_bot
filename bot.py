@@ -525,12 +525,33 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
+
+    import os
+from aiohttp import web
+from aiogram import Bot, Dispatcher
+
 async def main():
-    bot = Bot(BOT_TOKEN)
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
+    bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
-    dp.include_router(router)
-    print("Bot ishga tushdi.")
-    await dp.start_polling(bot)
+    dp.include_router(router)  # твой router
+
+    async def handle(request):
+        update = await request.json()
+        await dp.process_update(update)
+        return web.Response()
+
+    app = web.Application()
+    app.router.add_post(f"/{BOT_TOKEN}", handle)
+
+    print("Bot ishga tushdi (webhook).")
+    port = int(os.environ.get("PORT", 8000))
+    web.run_app(app, port=port)
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
+
 
 if __name__ == "__main__":
     try:
