@@ -9,7 +9,8 @@ MAIN_ADMIN = 6106674802
 JOB_TYPES = [
     "Sotuvchi",
     "Operator",
-    "Kurier",
+    "Sklad xodimi",
+    "Dazmolchi",
     "Boshqa"
 ]
 
