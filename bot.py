@@ -525,15 +525,18 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 # ------------- Main entry -------------
-async def main():
-    bot = Bot(BOT_TOKEN)
-    dp = Dispatcher()
-    dp.include_router(router)
-    print("Bot ishga tushdi.")
-    await dp.start_polling(bot)
+import os
+from aiohttp import web
+from aiogram import Bot, Dispatcher
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        print("Bot to'xtatildi.")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+bot = Bot(BOT_TOKEN)
+dp = Dispatcher(storage=MemoryStorage())
+
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
