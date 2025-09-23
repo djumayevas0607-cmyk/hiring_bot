@@ -530,11 +530,13 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from handlers import router
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+dp.include_router(router)
 
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
 WEBHOOK_PATH = "/webhook"
