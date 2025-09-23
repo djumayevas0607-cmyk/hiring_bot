@@ -527,7 +527,6 @@ async def cancel(msg: Message, state: FSMContext):
 
 # main.py
 import os
-import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
@@ -541,6 +540,8 @@ bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
 )
+
+# --- Dispatcher ---
 dp = Dispatcher()
 dp.include_router(router)
 
