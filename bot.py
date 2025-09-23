@@ -525,26 +525,52 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 
-# --- main entry---
-# ------------- Main entry -------------
+# main.py
+import os
 import asyncio
-
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-# создаём bot и dispatcher
-bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+from bot import router   # твой router из bot.py
+from config import BOT_TOKEN
+
+# --- Bot ---
+bot = Bot(
+    token=BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode="HTML")
+)
 dp = Dispatcher()
-
-# подключаем твой router
 dp.include_router(router)
 
-async def main():
-    # при запуске сбрасываем старый вебхук и pending updates
+# --- Webhook config ---
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://ТВОЁ-ПРИЛОЖЕНИЕ.koyeb.app")
+WEBHOOK_PATH = "/webhook"
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+
+# --- Startup / Shutdown ---
+async def on_startup(app: web.Application):
     await bot.delete_webhook(drop_pending_updates=True)
-    # запускаем polling
-    await dp.start_polling(bot)
+    await bot.set_webhook(WEBHOOK_URL)
+    print("Webhook установлен:", WEBHOOK_URL)
+
+async def on_shutdown(app: web.Application):
+    await bot.session.close()
+    print("Bot остановлен")
+
+# --- Main ---
+def main():
+    app = web.Application()
+
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+
+    port = int(os.getenv("PORT", 8080))
+    web.run_app(app, host="0.0.0.0", port=port)
 
 if __name__ == "__main__":
-    asyncio.run(main())
-
+    main()
