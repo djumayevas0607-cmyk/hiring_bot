@@ -530,13 +530,13 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from handlers import router
+from handlers import router   # ← подключаем всю твою старую логику
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
-dp.include_router(router)
+dp.include_router(router)     # ← подключаем все хендлеры
 
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
 WEBHOOK_PATH = "/webhook"
@@ -546,13 +546,11 @@ async def on_startup(app: web.Application):
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(WEBHOOK_URL)
     print("Webhook set:", WEBHOOK_URL)
-    print("Bot ishga tushdi.")  # ← твоя надпись при старте
-
+    print("Bot ishga tushdi.")  # ← твое сообщение при старте
 
 async def on_shutdown(app: web.Application):
     await bot.session.close()
     print("Bot stopped.")
-
 
 def main():
     app = web.Application()
@@ -568,8 +566,5 @@ def main():
     port = int(os.getenv("PORT", 8000))
     web.run_app(app, host="0.0.0.0", port=port)
 
-
 if __name__ == "__main__":
     main()
-
-
