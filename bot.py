@@ -527,12 +527,13 @@ async def cancel(msg: Message, state: FSMContext):
 
 # main.py
 import os
+import asyncio
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from bot import router   # твой router из bot.py
+from bot import router   # твой router с логикой
 from config import BOT_TOKEN
 
 # --- Bot ---
@@ -543,10 +544,10 @@ bot = Bot(
 
 # --- Dispatcher ---
 dp = Dispatcher()
-dp.include_router(router)
+dp.include_router(router)   # подключаем твой router
 
 # --- Webhook config ---
-WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app/")
+WEBHOOK_HOST = "https://alert-ilene-sabinas-34811b65.koyeb.app"
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
@@ -554,16 +555,17 @@ WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 async def on_startup(app: web.Application):
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(WEBHOOK_URL)
-    print("Webhook установлен:", WEBHOOK_URL)
+    print("✅ Webhook установлен:", WEBHOOK_URL)
 
 async def on_shutdown(app: web.Application):
     await bot.session.close()
-    print("Bot остановлен")
+    print("🛑 Bot остановлен")
 
 # --- Main ---
 def main():
     app = web.Application()
 
+    # Подключаем webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
