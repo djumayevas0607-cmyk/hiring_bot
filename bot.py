@@ -524,51 +524,27 @@ async def cancel(msg: Message, state: FSMContext):
     await state.clear()
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
+
+# --- main entry---
 # ------------- Main entry -------------
-import os
-from aiohttp import web
-from aiogram import Bot, Dispatcher, types
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiogram.filters import Command  # если у тебя используются фильтры
+import asyncio
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
-bot = Bot(BOT_TOKEN)
-dp = Dispatcher(storage=MemoryStorage())
+from aiogram import Bot, Dispatcher
+from aiogram.client.bot import DefaultBotProperties
 
-# =========================
-# Здесь твоя логика бота
-# Пример:
-# @dp.message(Command("start"))
-# async def start_handler(message: types.Message):
-#     await message.answer_video(video=open("video.mp4", "rb"))
-#     await message.answer("Вопрос 1: ...")
-# =========================
+# создаём bot и dispatcher
+bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+dp = Dispatcher()
 
-WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
-WEBHOOK_PATH = "/webhook"
-WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+# подключаем твой router
+dp.include_router(router)
 
-async def on_startup(app: web.Application):
+async def main():
+    # при запуске сбрасываем старый вебхук и pending updates
     await bot.delete_webhook(drop_pending_updates=True)
-    await bot.set_webhook(WEBHOOK_URL)
-    print("Webhook установлен:", WEBHOOK_URL)
-
-async def on_shutdown(app: web.Application):
-    await bot.session.close()
-    print("Бот остановлен")
-
-def main():
-    app = web.Application()
-    # Регистрируем dispatcher с ботом
-    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
-    setup_application(app, dp, bot=bot)
-
-    app.on_startup.append(on_startup)
-    app.on_shutdown.append(on_shutdown)
-
-    port = int(os.getenv("PORT", 8000))
-    web.run_app(app, host="0.0.0.0", port=port)
+    # запускаем polling
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
+
