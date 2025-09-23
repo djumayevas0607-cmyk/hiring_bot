@@ -540,3 +540,33 @@ WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.k
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
+async def on_startup(app: web.Application):
+    await bot.delete_webhook(drop_pending_updates=True)
+    await bot.set_webhook(WEBHOOK_URL)
+    print("Webhook set:", WEBHOOK_URL)
+
+
+async def on_shutdown(app: web.Application):
+    await bot.session.close()
+    print("Bot stopped.")
+
+
+def main():
+    app = web.Application()
+
+    # Aiogram + Aiohttp связка
+    SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
+    setup_application(app, dp, bot=bot)
+
+    app.on_startup.append(on_startup)
+    app.on_shutdown.append(on_shutdown)
+
+    # Запуск под Koyeb (PORT приходит из env)
+    port = int(os.getenv("PORT", 8000))
+    web.run_app(app, host="0.0.0.0", port=port)
+
+
+if __name__ == "__main__":
+    main()
+
+
