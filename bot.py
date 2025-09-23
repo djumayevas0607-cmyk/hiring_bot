@@ -525,7 +525,7 @@ async def cancel(msg: Message, state: FSMContext):
     await msg.answer("Bekor qilindi. /start dan qayta boshlang.", reply_markup=ReplyKeyboardRemove())
 
 
-# main.py
+# ---------------- Main entry ----------------
 import os
 import asyncio
 from aiohttp import web
@@ -533,21 +533,19 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from bot import router   # твой router с логикой
-from config import BOT_TOKEN
+# ⚠️ Используем твой существующий router
+# (он должен быть определён выше в этом же файле)
+dp = Dispatcher()
+dp.include_router(router)
 
-# --- Bot ---
+# создаём bot
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
 )
 
-# --- Dispatcher ---
-dp = Dispatcher()
-dp.include_router(router)   # подключаем твой router
-
 # --- Webhook config ---
-WEBHOOK_HOST = "https://alert-ilene-sabinas-34811b65.koyeb.app"
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
@@ -561,11 +559,8 @@ async def on_shutdown(app: web.Application):
     await bot.session.close()
     print("🛑 Bot остановлен")
 
-# --- Main ---
 def main():
     app = web.Application()
-
-    # Подключаем webhook handler
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
