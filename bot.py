@@ -544,6 +544,7 @@ async def on_startup(app: web.Application):
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(WEBHOOK_URL)
     print("Webhook set:", WEBHOOK_URL)
+    print("Bot ishga tushdi.")  # ← твоя надпись при старте
 
 
 async def on_shutdown(app: web.Application):
