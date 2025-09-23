@@ -546,7 +546,7 @@ dp = Dispatcher()
 dp.include_router(router)
 
 # --- Webhook config ---
-WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://ТВОЁ-ПРИЛОЖЕНИЕ.koyeb.app")
+WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app/")
 WEBHOOK_PATH = "/webhook"
 WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
 
