@@ -104,7 +104,7 @@ def education_kb() -> InlineKeyboardMarkup:
     return inline_from_list(["o'rta", "o'rta maxsus", "oliy"], "edu")
 
 def marital_kb() -> InlineKeyboardMarkup:
-    return inline_from_list(["turmush qurganman", "turmush qurmaganman", "ajrashganman"], "marital")
+    return inline_from_list(["oilaliman", "oilasizman", "ajrashganman"], "marital")
 
 def russian_kb() -> InlineKeyboardMarkup:
     return inline_from_list(["a'lo", "yaxshi", "past", "bilmayman"], "ru")
