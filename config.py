@@ -9,9 +9,13 @@ MAIN_ADMIN = 6106674802
 JOB_TYPES = [
     "Sotuvchi",
     "Operator",
-    "Sklad xodimi",
+    "Ombor xodimi",
     "Dazmolchi",
-    "Boshqa"
+    "Kassir",
+    "Menedjer",
+    "Merchendayzer",
+    "Brand face",
+    "Mobilograf"
 ]
 
 # Where to store media/admin files
