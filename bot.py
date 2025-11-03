@@ -526,20 +526,6 @@ async def cancel(msg: Message, state: FSMContext):
 
 
 # ---------------- Main entry ----------------
-import os
-import asyncio
-from aiohttp import web
-from aiogram import Bot, Dispatcher
-from aiogram.client.bot import DefaultBotProperties
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-
-# ⚠️ Используем твой существующий router
-# (он должен быть определён выше в этом же файле)
-dp = Dispatcher()
-dp.include_router(router)
-
-# создаём bot
-bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
 )
@@ -559,16 +545,31 @@ async def on_shutdown(app: web.Application):
     await bot.session.close()
     print("🛑 Bot остановлен")
 
+
+# ✅ добавляем проверку для UptimeRobot
+async def health(request):
+    return web.Response(text="Bot is alive!")
+
+
 def main():
     app = web.Application()
+
+    # регистрируем основной webhook
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path=WEBHOOK_PATH)
     setup_application(app, dp, bot=bot)
 
+    # 👇 добавляем маршрут проверки
+    app.router.add_get("/", health)
+
+    # стандартные события
     app.on_startup.append(on_startup)
     app.on_shutdown.append(on_shutdown)
 
+    # запуск
     port = int(os.getenv("PORT", 8080))
     web.run_app(app, host="0.0.0.0", port=port)
 
+
 if __name__ == "__main__":
     main()
+
