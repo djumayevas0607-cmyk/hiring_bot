@@ -526,10 +526,10 @@ async def cancel(msg: Message, state: FSMContext):
 
 
 # ---------------- Main entry ----------------
+bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode="HTML")
 )
-
 # --- Webhook config ---
 WEBHOOK_HOST = os.getenv("WEBHOOK_HOST", "https://alert-ilene-sabinas-34811b65.koyeb.app")
 WEBHOOK_PATH = "/webhook"
