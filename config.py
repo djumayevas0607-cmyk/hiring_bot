@@ -1,6 +1,6 @@
 # config.py
 # Fill in your bot token and main admin id here.
-BOT_TOKEN = "8593752690:AAFk9Jg8ONjhaQc4ZtTEuE3VBB_3rZENRnA"
+BOT_TOKEN = "8593752690:AAFekQvRFp8yM55l9VFPmaHRQYNDo-bEHCo"
 
 # ID главного админа
 MAIN_ADMIN = 6106674802
