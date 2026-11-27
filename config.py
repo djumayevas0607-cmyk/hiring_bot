@@ -4,7 +4,7 @@ BOT_TOKEN = "8922449969:AAHpbdq35zJceBkaZ6t0Frl_r8-0KqFGPuk"
 
 # ID главного админа
 # ID главных администраторов
-MAIN_ADMIN = 61066748026, 7863580983, 9067029688
+MAIN_ADMIN = 9067029688
 
 # Initial job types (you can edit freely)
 JOB_TYPES = [
