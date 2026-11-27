@@ -3,7 +3,7 @@
 BOT_TOKEN = "8922449969:AAHpbdq35zJceBkaZ6t0Frl_r8-0KqFGPuk"
 
 # ID главного админа
-MAIN_ADMIN = 6106674802б, 7863580983 
+MAIN_ADMIN = 6106674802б, 7863580983, 9067029688 ;
 
 # Initial job types (you can edit freely)
 JOB_TYPES = [
