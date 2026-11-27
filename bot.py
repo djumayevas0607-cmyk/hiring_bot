@@ -15,6 +15,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from config import BOT_TOKEN, MAIN_ADMIN, JOB_TYPES, STORAGE_DIR
+MAIN_ADMINS = (
+    [int(x) for x in MAIN_ADMIN]
+    if isinstance(MAIN_ADMIN, (list, tuple, set))
+    else [int(MAIN_ADMIN)]
+)
 
 # -------- Simple JSON storage for media and admins --------
 MEDIA_FILE = f"{STORAGE_DIR}/media.json"
@@ -36,22 +41,60 @@ def save_json(path: str, data: Any) -> None:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 # Ensure storage dir and files exist
+# Ensure storage dir and files exist
 import os
+
 os.makedirs(STORAGE_DIR, exist_ok=True)
+
 if not os.path.exists(MEDIA_FILE):
     save_json(MEDIA_FILE, {
-        "intro_video_file_id": null_if_empty(""),
-        "voice_prompt_file_id": null_if_empty(""),
-        "russian_video_prompt_file_id": null_if_empty("")
+        "intro_video_file_id": None,
+        "voice_prompt_file_id": None,
+        "russian_video_prompt_file_id": None
     })
-if not os.path.exists(ADMINS_FILE):
-    save_json(ADMINS_FILE, {"admins": [MAIN_ADMIN]})
 
-def null_if_empty(s: str):
-    return None if not s else s
+if not os.path.exists(ADMINS_FILE):
+    save_json(ADMINS_FILE, {"admins": MAIN_ADMINS.copy()})
+
 
 def get_media() -> Dict[str, Any]:
     data = load_json(MEDIA_FILE, {})
+    for key in [
+        "intro_video_file_id",
+        "voice_prompt_file_id",
+        "russian_video_prompt_file_id"
+    ]:
+        data.setdefault(key, None)
+    return data
+
+
+def get_admins() -> List[int]:
+    data = load_json(ADMINS_FILE, {"admins": []})
+
+    admins = []
+
+    def add_ids(items):
+        if isinstance(items, (list, tuple, set)):
+            for item in items:
+                add_ids(item)
+        else:
+            try:
+                uid = int(items)
+                if uid not in admins:
+                    admins.append(uid)
+            except (ValueError, TypeError):
+                pass
+
+    add_ids(data.get("admins", []))
+    add_ids(MAIN_ADMINS)
+
+    save_json(ADMINS_FILE, {"admins": admins})
+
+    return admins
+
+
+def is_admin(user_id: int) -> bool:
+    return user_id in get_admins()
     # Guarantee keys
     for key in ["intro_video_file_id", "voice_prompt_file_id", "russian_video_prompt_file_id"]:
         data.setdefault(key, None)
@@ -489,8 +532,8 @@ async def set_russian_video(msg: Message):
 
 @router.message(Command("add_admin"))
 async def add_admin(msg: Message):
-    if msg.from_user.id != MAIN_ADMIN:
-        return
+    if msg.from_user.id not in MAIN_ADMINS:
+       return
     parts = msg.text.strip().split()
     if len(parts) != 2 or not parts[1].isdigit():
         await msg.answer("Foydalanish: /add_admin 123456789")
